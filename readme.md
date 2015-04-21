@@ -37,6 +37,44 @@ npm install
 grunt
 ```
 
+### Sensitive Information
+We encourage you __not__ to store sensitive data in your git repository. If you must, please look into [git-encrypt](https://github.com/shadowhand/git-encrypt) or some other method of encrypting your configuration secrets.
+
+1. Create a file `secrets.json` in your project root.
+2. Paste the following sample code in `secrets.json` and enter the appropriate credentials for the services you want to connect with. It's ok to leave these defaults, but they should exist.
+
+```
+{
+  "mailgun": {
+    "api_key": "YOUR MG PRIVATE API KEY",
+    "sender": "E.G. POSTMASTER@YOURDOMAIN.COM",
+    "recipient": "WHO YOU WANT TO SEND THE EMAIL TO"
+  },
+  "litmus": {
+    "username": "LITMUS USER NAME",
+    "password": "LITMUS PASS",
+    "company": "LITMUS COMPANY/API SUBDOMAIN NAME"
+  },
+  "cloudfiles": {
+    "user": "CLOUDFILES USERNAME",
+    "key": "CLOUDFILES KEY",
+    "region": "CLOUDFILES REGION E.G. ORD",
+    "container": "CLOUDFILES CONTAINER NAME",
+    "uri": "CLOUDFILES URI"
+  },
+  "s3": {
+    "key": "AMAZON S3 KEY",
+    "secret": "AMAZON S3 SECRET",
+    "region": "AMAZON S3 REGION",
+    "bucketname": "AMAZON S3 BUCKET NAME",
+    "bucketdir": "AMAZON S3 BUCKET SUBDIRECTORY (optional)",
+    "bucketuri": "AMAZON S3 PATH (ex: https://s3.amazonaws.com/)"
+  }
+}
+```
+
+
+
 ## How it works
 
 <img src="http://i.imgur.com/yrHpTdr.jpg" width="500">
@@ -57,6 +95,14 @@ Handlebars and Assemble are used for templating.
 
 `/emails` is where your email content will go. To start you off I've included example transactional emails based on my [simple HTML email template](https://github.com/leemunroe/html-email-template).
 
+`/data` contains _optional_ .yml or .json data files that can be used in your templates. It's a good way to store commonly used strings. See `/data/default.yml` and `/partials/follow_lee.hbs` for an example.
+
+`/partials` contains _optional_ .hbs files that can be thought of like includes. To use a partial, for example `/partials/follow_lee.hbs` you would use the following code in your emails template:
+
+```
+{{> follow_lee }}
+```
+
 ### Generate your email templates
 
 In terminal, run `grunt`. This will:
@@ -66,6 +112,8 @@ In terminal, run `grunt`. This will:
 * Inline your CSS
 
 See the output HTML in the `dist` folder. Open them and preview it the browser.
+
+<img src="http://i.imgur.com/WoWgRxm.gif" width="500">
 
 Alternatively run `grunt watch`. This will check for any changes you make to your .scss and .hbs templates, then automatically run the tasks. Saves you having to run grunt every time.
 
@@ -77,6 +125,8 @@ Alternatively run `grunt watch`. This will check for any changes you make to you
 * Change the sender and recipient to your own email address (or whoever you want to send it to)
 
 Run `grunt send --template=transaction.html`. This will email out the template you specify.
+
+<img src="http://i.imgur.com/6N8VRen.gif" width="500">
 
 Change 'transaction.html' to the name of the email template you want to send.
 
@@ -109,6 +159,38 @@ If your email contains images you'll want to serve them from a CDN. This Gruntfi
 Run `grunt cdnify` to run the default tasks as well as upload any images to your CDN.
 
 Run `grunt cdnify send --template=branded.html` to send the email to yourself with the 'CDNified' images.
+
+
+### Using Amazon S3 for image assets
+
+Another option for serving images is to use Amazon S3. Basic service is free of charge. For more information on setting up an account, visit [Amazon](http://aws.amazon.com/s3/).
+
+The Gruntfile uses [grunt-aws-s3](https://github.com/MathieuLoutre/grunt-aws-s3).
+
+Once your AWS account is setup, create a Bucket within S3. You will need to ensure your Bucket has a policy setup under Permissions. Below is a very loose sample policy for testing purposes. You should read up on [AWS Identity and Access Management](http://aws.amazon.com/iam/) for more information.
+
+**Sample S3 Bucket Policy**
+
+```
+{
+  "Version": "2008-10-17",
+  "Id": "Policy123",
+  "Statement": [
+    {
+      "Sid": "Stmt456",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::BUCKETNAME"
+    }
+  ]
+}
+```
+
+Run `grunt s3upload` to upload images to your S3 Bucket. This will also run a replace task to change image paths within the destination directory to use the new S3 path.
+
 
 ### Sample email templates
 
